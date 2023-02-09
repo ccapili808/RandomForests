@@ -26,6 +26,8 @@ public class Features {
         String[] firstLine = sc.nextLine().split(",");
         //Add all features to list
         for (String s : firstLine) {
+            if (s.equals("id")) continue;
+            if (s.equals("class")) continue;
             featureCount++;
             features.add(s);
         }

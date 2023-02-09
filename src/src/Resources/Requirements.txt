@@ -1,0 +1,40 @@
+Instructions
+The goal of this project is to learn the ins and outs of decision trees and random forests. Your task is to code the following from scratch:
+
+A decision tree that uses Information Gain as split criterium and chi square as alternate termination rule.
+Implement Information Gain with: (1) entropy, (2) gini index, (3) misclasification error
+Implement a random forest based on your decision tree and any criteria of your choosing
+Complete the following experiments:
+
+Compare and contrast the trees built by IG with entropy, gini index, and misclassification error, in terms of their structural properties and accuracy. Include for example maximum depth, average depth, average accuracy, etc
+Use chi-square as a termination rule with \alpha = 0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.99 compare and contrast the resulting trees
+DIscuss in your report:
+
+Deliverables
+Turn in the following through Canvas:
+
+Your code, do not include data (if you prefer, you can tun in a link to your repository instead)
+A report in PDF format containig the sections specified in the instructions
+Rubric (in construction)
+Basics:
+
+Correctly handles missing data (10 pts)
+Appropriately codes and uses IG (10 pts)
+Appropriately codes and uses Entropy (5 pts)
+Appropriately codes and uses Gini Index (5 pts)
+Appropriately codes and uses ME (5 pts)
+Model Selection and Tuning:
+
+Correctly implements and trains the random forest model (10 pts)
+Appropriately uses a validation set for tuning hyperparameters for improved performance (5 pts)
+Report:
+Provides a discussion on the different options for split criteria
+Provides a discussion on the different values for \alpha in chi square
+Interprets the results and provides insights into the model performance (15 pts)
+Provides insights into the relationship between features and the target variable (10 pts)
+
+Code and Documentation:
+
+Code is well-organized, readable, and modular (10 pts)
+Includes appropriate comments and documentation (10 pts)
+Total: 100 pts

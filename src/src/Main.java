@@ -13,7 +13,14 @@ public class Main {
         Features features = new Features();
         features.loadFeatures("C:\\Users\\Chai\\Documents\\RandomForests\\src\\src\\Resources\\agaricus-lepiota - training.csv");
         buildDataSet(features);
-        for (Mushroom mushroom : mushrooms) {
+        DecisionTree decisionTree = new DecisionTree(features, mushrooms);
+        //Print features
+        for (String feature: features.getFeatures()) {
+            System.out.println(feature);
+        }
+        System.out.println("Feature size: " + features.getFeatures().size());
+        //Print mushrooms
+        for (Mushroom mushroom: mushrooms) {
             mushroom.printMushroom();
         }
     }
@@ -31,14 +38,13 @@ public class Main {
         sc.nextLine();
         while (sc.hasNextLine()) {
             String[] line = sc.nextLine().split(",");
-            Mushroom mushroom = new Mushroom(features.getFeatures(), line[0]);
-            for (int i = 1; i < line.length; i++) {
-                mushroom.addFeature(features.getFeatures().get(i), line[i]);
+            String mushroomClass = line[1];
+            int id = Integer.parseInt(line[0]);
+            Mushroom mushroom = new Mushroom(features.getFeatures(), line[0], id, mushroomClass);
+            for (int i = 2; i < line.length; i++) {
+                mushroom.addFeature(features.getFeatures().get(i - 2), line[i]);
             }
             mushrooms.add(mushroom);
         }
     }
-
-
-
 }
