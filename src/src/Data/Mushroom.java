@@ -9,6 +9,7 @@ public class Mushroom {
     private String mushroomClass;
     private final List<String> features;
     private Map<String, String> featureMap = new HashMap<>();
+    private Map<String, Integer> encoding = new HashMap<>();
 
     /*
     * Constructor for Data.Mushroom class
@@ -51,5 +52,17 @@ public class Mushroom {
         System.out.println();
     }
 
+
+    public Map<String, String> getFeatureMap() {
+        return featureMap;
+    }
+
+    public void setEncoding(Map<String, Integer> encoding) {
+        this.encoding = encoding;
+    }
+
+    public Map<String, Integer> getEncoding() {
+        return encoding;
+    }
 
 }

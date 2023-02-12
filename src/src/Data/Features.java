@@ -4,13 +4,13 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 public class Features {
     public List<String> getFeatures() {
         return features;
     }
-
     private final List<String> features = new ArrayList<>();
     private int featureCount = 0;
     public Features(){}

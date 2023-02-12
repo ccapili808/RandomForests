@@ -1,11 +1,8 @@
 import Data.Features;
 import Data.Mushroom;
-
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 public class Main {
     private static final List<Mushroom> mushrooms = new ArrayList<>();
@@ -14,15 +11,6 @@ public class Main {
         features.loadFeatures("C:\\Users\\Chai\\Documents\\RandomForests\\src\\src\\Resources\\agaricus-lepiota - training.csv");
         buildDataSet(features);
         DecisionTree decisionTree = new DecisionTree(features, mushrooms);
-        //Print features
-        for (String feature: features.getFeatures()) {
-            System.out.println(feature);
-        }
-        System.out.println("Feature size: " + features.getFeatures().size());
-        //Print mushrooms
-        for (Mushroom mushroom: mushrooms) {
-            mushroom.printMushroom();
-        }
     }
 
 
@@ -47,4 +35,8 @@ public class Main {
             mushrooms.add(mushroom);
         }
     }
+
+    /*
+        Lookup a feature's possible values feature entropy
+     */
 }
