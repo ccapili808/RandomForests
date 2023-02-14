@@ -2,6 +2,7 @@ import Data.Features;
 import Data.Mushroom;
 import javafx.scene.Node;
 
+import java.io.InputStreamReader;
 import java.util.*;
 
 public class DecisionTree {
@@ -11,6 +12,7 @@ public class DecisionTree {
     private int numFeatures;
     private int numMushrooms;
     private int numberOfClasses = 2;
+    private List<DecisionNode> treeNodes = new ArrayList<>();
     /*
     * Constructor for DecisionTree class
     * @param features List of features
@@ -23,10 +25,13 @@ public class DecisionTree {
         this.mushrooms = mushrooms;
         this.numMushrooms = mushrooms.size();
         buildTree();
+        predict();
     }
 
     //Implement the decision tree algorithm
     public void buildTree() {
+        DecisionNode root = new DecisionNode(mushrooms, features.getFeatures(), this);
+        /*
         this.entropy = entropy(mushrooms);
         System.out.println(entropy);
         Map<String, Double> featureInfoGain = new HashMap<>();
@@ -39,7 +44,40 @@ public class DecisionTree {
         System.out.println(Collections.max(featureInfoGain.entrySet(), Map.Entry.comparingByValue()).getKey());
         //print the highest information gain value
         System.out.println(Collections.max(featureInfoGain.entrySet(), Map.Entry.comparingByValue()).getValue());
+        */
+    }
 
+    //predict the class of mushrooms from the csv
+    public void predict() {
+        //Read each line after the first line
+        Scanner sc = null;
+        sc = new Scanner(new InputStreamReader(Main.class.getResourceAsStream("agaricus-lepiota - testing.csv")));
+        //Skip first line
+        sc.nextLine();
+        while (sc.hasNextLine()) {
+            String[] line = sc.nextLine().split(",");
+            int id = Integer.parseInt(line[0]);
+            Mushroom mushroom = new Mushroom(features.getFeatures(), line[0], id);
+            for (int i = 1; i < line.length; i++) {
+                mushroom.addFeature(features.getFeatures().get(i - 1), line[i]);
+            }
+            traverseNode(treeNodes.get(0),mushroom);
+        }
+    }
+
+    //traverse a node's children to find the correct path
+    public void traverseNode(DecisionNode node, Mushroom mushroom) {
+        for (DecisionNode decisionNode: node.getChildNodes()) {
+            if(mushroom.getFeatureValue(node.getQuestion()).equals(decisionNode.getFeatureValue())) {
+                DecisionNode nextNode = decisionNode;
+                if (nextNode.isLeaf()) {
+                    System.out.println("Mushroom " + mushroom.getId() + " has classification " + nextNode.getMushroomClass());
+                }
+                else {
+                    traverseNode(nextNode, mushroom);
+                }
+            }
+        }
     }
 
     public static Map<String, Integer> getClassCounts(List<Mushroom> mushrooms) {
@@ -100,7 +138,7 @@ public class DecisionTree {
         }
         //Print out class counts
         for (String mushroomClass : classCounts.keySet()) {
-            System.out.println(mushroomClass + ": " + classCounts.get(mushroomClass));
+            //System.out.println(mushroomClass + ": " + classCounts.get(mushroomClass));
             total += classCounts.get(mushroomClass);
         }
         //get the entropy for this feature
@@ -141,6 +179,10 @@ public class DecisionTree {
             uniqueValues.put(feature, values);
         }
         return uniqueValues;
+    }
+
+    public void addNode(DecisionNode decisionNode) {
+        treeNodes.add(decisionNode);
     }
 
 
