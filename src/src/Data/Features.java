@@ -2,10 +2,7 @@ package Data;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
 
 public class Features {
     public List<String> getFeatures() {
@@ -32,6 +29,16 @@ public class Features {
             features.add(s);
         }
         return features;
+    }
+
+    public Set<String> get_N_Features(int n) {
+        Set<String> nFeatures = new HashSet<>();
+        //add n unique features to list
+        Random rand = new Random();
+        while (nFeatures.size() < n) {
+            nFeatures.add(features.get(rand.nextInt(featureCount)));
+        }
+        return nFeatures;
     }
 
 }
