@@ -1,6 +1,7 @@
 import Data.Features;
 import Data.Mushroom;
 import java.io.File;
+import java.io.*;
 import java.io.FileNotFoundException;
 import java.util.*;
 
@@ -8,7 +9,7 @@ public class Main {
     private static final List<Mushroom> mushrooms = new ArrayList<>();
     public static void main(String[] args) {
         Features features = new Features();
-        features.loadFeatures("C:\\Users\\Chai\\Documents\\RandomForests\\src\\src\\Resources\\agaricus-lepiota - training.csv");
+        features.loadFeatures("C:\\Users\\gkour\\Documents\\CS429\\RandomForests2\\src\\src\\Resources\\agaricus-lepiota - training.csv");
         buildDataSet(features);
         DecisionTree decisionTree = new DecisionTree(features, mushrooms);
     }
@@ -17,11 +18,7 @@ public class Main {
     public static void buildDataSet(Features features) {
         //Read each line after the first line
         Scanner sc = null;
-        try {
-            sc = new Scanner(new File("C:\\Users\\Chai\\Documents\\RandomForests\\src\\src\\Resources\\agaricus-lepiota - training.csv"));
-        } catch (FileNotFoundException e) {
-            System.out.println("The given filepath could not be found");
-        }
+        sc = new Scanner(new InputStreamReader(Main.class.getResourceAsStream("agaricus-lepiota - training.csv")));
         //Skip first line
         sc.nextLine();
         while (sc.hasNextLine()) {

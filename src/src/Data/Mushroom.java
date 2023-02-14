@@ -26,6 +26,14 @@ public class Mushroom {
         this.mushroomClass = mushroomClass;
     }
 
+    public Mushroom(List<String> features, String featureValues, int id) {
+        this.features = features;
+        for (String feature: features) {
+            featureMap.put(feature, featureValues);
+        }
+        this.id = id;
+    }
+
     public int getId() {
         return id;
     }
