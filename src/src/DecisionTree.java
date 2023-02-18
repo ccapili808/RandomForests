@@ -1,8 +1,6 @@
 import Data.Features;
 import Data.Mushroom;
-import javafx.scene.Node;
 
-import java.io.InputStreamReader;
 import java.util.*;
 
 public class DecisionTree {
@@ -16,11 +14,14 @@ public class DecisionTree {
     private double alpha;
     private List<DecisionNode> treeNodes = new ArrayList<>();
     private Map<Integer, Map<Double,Double>> chiTable;
-    /*
-    * Constructor for DecisionTree class
-    * @param features List of features
-    * @param featureValues List of feature values for each feature
-    * This constructor stores each feature to a value in a hashmap
+
+    /**
+     * Constructor for the DecisionTree class
+     * @param features The list of features to use
+     * @param mushrooms The mushroom dataset list
+     * @param type The type of impurity to use (entropy, gini, me)
+     * @param chiTable The Chi Table values
+     * @param alpha The alpha value to use
      */
     public DecisionTree(List<String> features, List<Mushroom> mushrooms, String type,
                         Map<Integer,Map <Double,Double>> chiTable, double alpha)
@@ -31,51 +32,33 @@ public class DecisionTree {
         this.chiTable = chiTable;
         this.alpha = alpha;
         buildTree(type);
-        //predict();
     }
 
-    //Implement the decision tree algorithm
+    /**
+     * This method starts building the decision tree by creating a root node
+     * @param type the type of impurity used (entropy, gini, me)
+     */
     public void buildTree(String type) {
         DecisionNode root = new DecisionNode(mushrooms, features, this, type);
-        /*
-        this.entropy = entropy(mushrooms);
-        System.out.println(entropy);
-        Map<String, Double> featureInfoGain = new HashMap<>();
-        for (String feature: features.getFeatures()) {
-            featureInfoGain.put(feature, informationGain(feature));
-        }
-        System.out.println(featureInfoGain);
-        Map <String, Integer> map = getAllFeatureValues(mushrooms, "veil-type");
-        //print the highest information gain
-        System.out.println(Collections.max(featureInfoGain.entrySet(), Map.Entry.comparingByValue()).getKey());
-        //print the highest information gain value
-        System.out.println(Collections.max(featureInfoGain.entrySet(), Map.Entry.comparingByValue()).getValue());
-        */
+
     }
-/*
-    //predict the class of mushrooms from the csv
-    public String predict() {
-        //Read each line after the first line
-        Scanner sc = null;
-        sc = new Scanner(new InputStreamReader(Main.class.getResourceAsStream("agaricus-lepiota - testing.csv")));
-        //Skip first line
-        sc.nextLine();
-        while (sc.hasNextLine()) {
-            String[] line = sc.nextLine().split(",");
-            int id = Integer.parseInt(line[0]);
-            Mushroom mushroom = new Mushroom(Main.getFeatures(), line[0], id);
-            for (int i = 1; i < line.length; i++) {
-                mushroom.addFeature(Main.getFeatures().get(i - 1), line[i]);
-            }
-            return traverseNode(treeNodes.get(0),mushroom);
-        }
-    }
-*/
+
+    /**
+     * This method predicts the class of a mushroom
+     * @param mushroom the mushroom to predict
+     * @return the class of a mushroom
+     */
     public String predictMushroom(Mushroom mushroom) {
         return traverseNode(treeNodes.get(0), mushroom);
     }
 
-    //traverse a node's children to find the correct path
+    /**
+     * This method traverses the decision tree nodes until it finds a leaf node
+     * and returns the class of the mushroom
+     * @param node the current node
+     * @param mushroom the mushroom to predict
+     * @return the class of the mushroom
+     */
     public String traverseNode(DecisionNode node, Mushroom mushroom) {
         if (node.isLeaf()) {
             return node.getMushroomClass();
@@ -96,6 +79,12 @@ public class DecisionTree {
         return node.getMushroomClass();
     }
 
+    /**
+     * This method counts the total number of each class of mushrooms in
+     * a list of mushrooms
+     * @param mushrooms the list of mushrooms
+     * @return the class counts
+     */
     public Map<String, Integer> getClassCounts(List<Mushroom> mushrooms) {
         Map<String, Integer> classCounts = new HashMap<>();
         for (Mushroom mushroom: mushrooms) {
@@ -109,7 +98,13 @@ public class DecisionTree {
         return classCounts;
     }
 
-
+    /**
+     * This method checks the entropy of a list of mushrooms.
+     * Used to stop tree expansion if entropy is 0, which means all
+     * mushrooms have the same class in that node.
+     * @param mushrooms the list of mushrooms to check
+     * @return the entropy value
+     */
     public double entropy(List<Mushroom> mushrooms) {
         Map<String, Integer> classes = getClassCounts(mushrooms);
         double entropy = 0;
@@ -122,6 +117,13 @@ public class DecisionTree {
         return -entropy;
     }
 
+    /**
+     * This method returns the impurity for a List of mushrooms, using
+     * the different impurity types discussed in class
+     * @param mushrooms the list of mushrooms to check
+     * @param type the impurity type (entropy,gini,me)
+     * @return the impurity value
+     */
     public double impurity (List<Mushroom> mushrooms, String type) {
         Map<String, Integer> classes = getClassCounts(mushrooms);
         if (type.equals("entropy")) {
@@ -155,12 +157,24 @@ public class DecisionTree {
         return 0;
     }
 
-
+    /**
+     * This method returns the information gain for a particular decision tree split
+     * @param mushrooms The list of mushrooms to check
+     * @param feature The feature of mushrooms to check
+     * @param type The impurity type to use (entropy, gini, me)
+     * @return
+     */
     public double informationGain(List<Mushroom> mushrooms, String feature, String type) {
-        return  impurity(mushrooms, type) - featureEntropy(feature, type);
+        return  impurity(mushrooms, type) - featureImpurity(feature, type);
     }
 
-    public double featureEntropy(String feature, String type) {
+    /**
+     * This method calculates the entropy of a split using a feature
+     * @param feature the feature to calculate
+     * @param type the impurity type (entropy, gini, me)
+     * @return the value of the feature impurity
+     */
+    public double featureImpurity(String feature, String type) {
         Map<String, Integer> featureValues = getAllFeatureValues(mushrooms, feature);
         double featureImpurity = 0;
         //iterate through each mushroom and calculate the entropy for each feature
@@ -173,6 +187,13 @@ public class DecisionTree {
         return featureImpurity;
     }
 
+    /**
+     * This method calculates the impurity for a particular value of a feature
+     * @param feature the feature to calculate
+     * @param value the value of the feature to calculate
+     * @param type the type of impurity (entropy, gini, me)
+     * @return the value of the impurity
+     */
     public double lookupEncoding(String feature, String value, String type) {
         Map<String, Integer> classCounts = new HashMap<>();
         int total = 0;
@@ -227,6 +248,12 @@ public class DecisionTree {
         return 0;
     }
 
+    /**
+     * This method gets the count of each possible value of a feature
+     * @param mushrooms the list of mushrooms to use
+     * @param feature the feature to get the values of
+     * @return a map of the value and the count
+     */
     public Map<String, Integer> getAllFeatureValues(List<Mushroom> mushrooms, String feature) {
         Map<String, Integer> featureValues = new HashMap<>();
         //count the unique values for each feature
@@ -242,6 +269,11 @@ public class DecisionTree {
     }
 
 
+    /**
+     * This method gets all the possible unique values of each feature
+     * @param features the list of features to check
+     * @return a map of features mapped to their set of string values
+     */
     public  Map<String, Set<String>> getUniqueValues(Features features) {
         //for each feature show all of the possible values for that feature
         Map<String, Set<String>> uniqueValues = new HashMap<>();
@@ -256,10 +288,21 @@ public class DecisionTree {
         return uniqueValues;
     }
 
+    /**
+     * This method adds a node to the tree
+     * @param decisionNode the node to add
+     */
     public void addNode(DecisionNode decisionNode) {
         treeNodes.add(decisionNode);
     }
 
+    /**
+     * This method checks whether the statistic calculated for the split
+     * is greater than the chi square table value.
+     * @param degrees the degrees of freedom
+     * @param testValue the calculated value
+     * @return true if greater, false if not
+     */
     public boolean chiPassed (int degrees, double testValue) {
         if (testValue>chiTable.get(degrees).get(alpha)) {
             return true;

@@ -17,7 +17,15 @@ public class DecisionNode {
     private int depth = 0;
     private String impurityType;
 
-    //constructor for non root node
+    /**
+     * This is the class constructor for a node of a decision tree
+     * @param featureValue The value of the feature corresponding to this node
+     * @param parentNode The parent DecisionNode
+     * @param dataSet The remaining mushroom dataSet that had this featureValue
+     * @param features A list of the remaining possible features
+     * @param decisionTree The DecisionTree of this node
+     * @param impurityType The impurity type being used (entropy, gini, me)
+     */
     public DecisionNode(String featureValue, DecisionNode parentNode, List<Mushroom> dataSet,
                         List<String> features, DecisionTree decisionTree, String impurityType) {
         this.featureValue = featureValue;
@@ -59,7 +67,15 @@ public class DecisionNode {
         }
         //Split();
     }
-    //constructor for root node
+
+
+    /**
+     * This is the class constructor for the root node of a decision tree
+     * @param dataSet The list of mushrooms
+     * @param features The list of features
+     * @param decisionTree The decision tree of this node
+     * @param type The type of impurity being used (entropy, gini, me)
+     */
     public DecisionNode(List<Mushroom> dataSet,
                         List<String> features, DecisionTree decisionTree, String type) {
         for(Mushroom m: dataSet) {
@@ -81,35 +97,72 @@ public class DecisionNode {
         }
         Split();
     }
+
+    /**
+     * Getter for the depth of a node
+     * @return the depth
+     */
     public int getDepth() {
         return  depth;
     }
 
+    /**
+     * Getter for the question asked at a node
+     * @return the question
+     */
     public String getQuestion() {
         return question;
     }
 
+    /**
+     * Getter for the child nodes of a node
+     * @return the list of child nodes
+     */
     public List<DecisionNode> getChildNodes() {
         return childNodes;
     }
 
+    /**
+     * Getter for the feature value associated with a node
+     * @return the feature value
+     */
     public String getFeatureValue() {
         return featureValue;
     }
 
+    /**
+     * Getter for the isLeaf boolean
+     * @return the isLeaf value
+     */
     public boolean isLeaf() {
         return isLeaf;
     }
 
+    /**
+     * Getter for the mushroom class decision at this node
+     * @return the mushroom class
+     */
     public String getMushroomClass() {
         return mushroomClass;
     }
 
+    /**
+     * This method adds a child node to the node's list of child nodes
+     * @param node the node to add
+     */
     public void addChildNode(DecisionNode node) {
         this.childNodes.add(node);
     }
 
     //find best split and create child nodes
+
+    /**
+     * This method finds the best possible remaining feature to use for splitting the data
+     * using information gain, checks to make sure it passes the chi square test.
+     * If it does, it creates a child node for each value of the feature.
+     * If it doesn't, it sets this node as a leaf node, and sets the class of the node
+     * to the majority class of the mushroom set.
+     */
     public void Split() {
         double entropy = decisionTree.entropy(dataSet);
         Map<String, Double> featureInfoGain = new HashMap<>();

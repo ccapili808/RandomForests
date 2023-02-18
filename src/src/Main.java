@@ -15,17 +15,75 @@ public class Main {
     private static Features features;
     public static void main(String[] args) {
         features = new Features();
-        features.loadFeatures("C:\\Users\\gkour\\Documents\\CS429\\RandomForests2\\src\\src\\Resources\\agaricus-lepiota - training.csv");
+        features.loadFeatures();
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Enter impurity type (\"entropy\", \"gini\", \"me\")");
+        String impurityType = scanner.nextLine();
+        while (!impurityType.equals("entropy") && !impurityType.equals("gini") && !impurityType.equals("me")) {
+            System.out.println("Wrong input. Enter impurity type (\"entropy\", \"gini\", \"me\")");
+            impurityType = scanner.nextLine();
+        }
+        double alpha = 0;
+        System.out.println("Enter alpha value (\"0.995\", \"0.99\", \"0.975\", \"0.95\", \"0.90\", \"0.10\", \"0.05\", \"0.025\", \"0.01\", \"0.005\")");
+        alpha = Double.parseDouble(scanner.nextLine());
+        while (alpha != 0.995 && alpha != 0.99 && alpha != 0.975 && alpha != 0.95 && alpha != 0.90 && alpha != 0.10 && alpha != 0.05 && alpha != 0.025
+                && alpha != 0.01 && alpha != 0.005) {
+            System.out.println("Wrong input. Enter alpha value (\"0.995\", \"0.99\", \"0.975\", \"0.95\", \"0.90\", \"0.10\", \"0.05\", \"0.025\", \"0.01\", \"0.005\")");
+            alpha = Double.parseDouble(scanner.nextLine());
+        }
+
         buildDataSet(features);
         buildTestingSet(features);
         buildChiTable();
         splitMushroomSet(mushrooms);
-        for (int i = 0; i<101 ; i++) {
+        buildRandomForest(impurityType, alpha);
+        predict();
+
+    }
+
+    /**
+     * This method predicts the class of the mushrooms in the testing set
+     */
+    private static void predict() {
+        //for each mushroom get the majority from the random forest
+        for (Mushroom mushroom: testingSet) {
+            int pVotes = 0;
+            int eVotes = 0;
+            //get a vote from each tree
+            for(DecisionTree decisionTree: randomForest) {
+                switch (decisionTree.predictMushroom(mushroom)) {
+                    case "p":
+                        pVotes += 1;
+                        break;
+                    default:
+                        eVotes += 1;
+                }
+            }
+            String mushroomClass;
+            if (pVotes>eVotes) {
+                mushroomClass = "p";
+            }
+            else {
+                mushroomClass = "e";
+            }
+            System.out.println(mushroom.getId() + "," + mushroomClass);
+        }
+    }
+
+
+    /**
+     * This method builds a random forest with the training set using the given variables alpha and impurity type.
+     * @param impurityType the impurity type (entropy, gini, me)
+     * @param alpha the alpha value
+     */
+    private static void buildRandomForest(String impurityType, double alpha) {
+        for (int i = 0; i<51 ; i++) {
             DecisionTree decisionTree = new DecisionTree(createFeatureSubset(features.getFeatures()),
-                    createMushroomSubset(mushrooms), "gini", chiTable, 0.9);
+                    createMushroomSubset(trainingSet), impurityType, chiTable, alpha);
             randomForest.add(decisionTree);
         }
         int correct = 0;
+        //test with validation set
         for (Mushroom mushroom: validationSet) {
             int pVotes = 0;
             int eVotes = 0;
@@ -49,32 +107,15 @@ public class Main {
                 correct++;
             }
         }
+        //print forest accuracy
         double accuracy = ((double) (correct)) / ((double) validationSet.size());
         System.out.println("Random Forest Accuracy: " + accuracy);
-        for (Mushroom mushroom: testingSet) {
-            int pVotes = 0;
-            int eVotes = 0;
-            for(DecisionTree decisionTree: randomForest) {
-                switch (decisionTree.predictMushroom(mushroom)) {
-                    case "p":
-                        pVotes += 1;
-                        break;
-                    default:
-                        eVotes += 1;
-                }
-            }
-            String mushroomClass;
-            if (pVotes>eVotes) {
-                mushroomClass = "p";
-            }
-            else {
-                mushroomClass = "e";
-            }
-            System.out.println(mushroom.getId() + "," + mushroomClass);
-        }
-
     }
 
+    /**
+     * This method build the mushroom data set from the training csv file.
+     * @param features The Features object to add mushroom features to
+     */
     public static void buildDataSet(Features features) {
         //Read each line after the first line
         Scanner sc = null;
@@ -93,6 +134,11 @@ public class Main {
         }
     }
 
+
+    /**
+     * This method loads in the testing set from the csv file and make it into a mushroom list
+     * @param features The Features object to add mushroom features to
+     */
     public static void buildTestingSet(Features features) {
         //Read each line after the first line
         Scanner sc = null;
@@ -109,8 +155,14 @@ public class Main {
             testingSet.add(mushroom);
         }
     }
+
+
+    /**
+     * This method splits the training set into training and validation sets
+     * @param mushrooms The mushroom list to split
+     */
     public static void splitMushroomSet(List<Mushroom> mushrooms) {
-        int size = (int) (0.7 * mushrooms.size());
+        int size = (int) (0.8 * mushrooms.size());
         Random rand = new Random();
         for (int i = 0; i < size; i++) {
             trainingSet.add(mushrooms.remove(rand.nextInt(mushrooms.size())));
@@ -118,15 +170,27 @@ public class Main {
         validationSet = mushrooms;
     }
 
+
+    /**
+     * This method generates a new random mushroom list for the random forest decision trees.
+     * The new list contains the same amount of mushrooms as the original set, but randomly selected.
+     * @param mushrooms The mushroom list to use
+     * @return The random mushroom list
+     */
     public static List<Mushroom> createMushroomSubset (List<Mushroom> mushrooms) {
         List<Mushroom> subset = new ArrayList<>();
         Random rand = new Random();
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < mushrooms.size(); i++) {
             subset.add(mushrooms.get(rand.nextInt(mushrooms.size())));
         }
         return subset;
     }
 
+    /**
+     * This method generates a new random feature list for the random forest decision trees
+     * @param features The list of all mushroom features
+     * @return The new random list of features
+     */
     public static List<String> createFeatureSubset (List<String> features) {
         List<String> subset = new ArrayList<>();
         Random rand = new Random();
@@ -140,6 +204,9 @@ public class Main {
         return subset;
     }
 
+    /**
+     * This method builds the chi square value map from the txt containing the table values.
+     */
     public static void buildChiTable() {
         Scanner sc = new Scanner(new InputStreamReader(Main.class.getResourceAsStream("chitable.txt")));
         while (sc.hasNextLine()) {
@@ -159,6 +226,10 @@ public class Main {
         }
     }
 
+    /**
+     * This method gets the list of all mushroom features.
+     * @return
+     */
     public static List<String> getFeatures() {
         return features.getFeatures();
     }
