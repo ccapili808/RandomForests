@@ -15,7 +15,7 @@ public class Features {
     private final List<String> features = new ArrayList<>();
     private int featureCount = 0;
     public Features(){}
-    public List<String> loadFeatures(String filePath) {
+    public List<String> loadFeatures() {
         //parsing a CSV file into Scanner class constructor
         Scanner sc = null;
         sc = new Scanner(new InputStreamReader(getClass().getResourceAsStream("../agaricus-lepiota - training.csv")));

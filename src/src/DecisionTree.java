@@ -1,86 +1,91 @@
 import Data.Features;
 import Data.Mushroom;
-import javafx.scene.Node;
 
-import java.io.InputStreamReader;
 import java.util.*;
 
 public class DecisionTree {
     private double entropy;
-    private final Features features;
+    //private final Features features;
+    private List<String> features;
     private final List<Mushroom> mushrooms;
     private int numFeatures;
     private int numMushrooms;
     private int numberOfClasses = 2;
+    private double alpha;
     private List<DecisionNode> treeNodes = new ArrayList<>();
-    /*
-    * Constructor for DecisionTree class
-    * @param features List of features
-    * @param featureValues List of feature values for each feature
-    * This constructor stores each feature to a value in a hashmap
+    private Map<Integer, Map<Double,Double>> chiTable;
+
+    /**
+     * Constructor for the DecisionTree class
+     * @param features The list of features to use
+     * @param mushrooms The mushroom dataset list
+     * @param type The type of impurity to use (entropy, gini, me)
+     * @param chiTable The Chi Table values
+     * @param alpha The alpha value to use
      */
-    public DecisionTree(Features features, List<Mushroom> mushrooms)
+    public DecisionTree(List<String> features, List<Mushroom> mushrooms, String type,
+                        Map<Integer,Map <Double,Double>> chiTable, double alpha)
     {
         this.features = features;
         this.mushrooms = mushrooms;
         this.numMushrooms = mushrooms.size();
-        buildTree();
-        predict();
+        this.chiTable = chiTable;
+        this.alpha = alpha;
+        buildTree(type);
     }
 
-    //Implement the decision tree algorithm
-    public void buildTree() {
-        DecisionNode root = new DecisionNode(mushrooms, features.getFeatures(), this);
-        /*
-        this.entropy = entropy(mushrooms);
-        System.out.println(entropy);
-        Map<String, Double> featureInfoGain = new HashMap<>();
-        for (String feature: features.getFeatures()) {
-            featureInfoGain.put(feature, informationGain(feature));
+    /**
+     * This method starts building the decision tree by creating a root node
+     * @param type the type of impurity used (entropy, gini, me)
+     */
+    public void buildTree(String type) {
+        DecisionNode root = new DecisionNode(mushrooms, features, this, type);
+
+    }
+
+    /**
+     * This method predicts the class of a mushroom
+     * @param mushroom the mushroom to predict
+     * @return the class of a mushroom
+     */
+    public String predictMushroom(Mushroom mushroom) {
+        return traverseNode(treeNodes.get(0), mushroom);
+    }
+
+    /**
+     * This method traverses the decision tree nodes until it finds a leaf node
+     * and returns the class of the mushroom
+     * @param node the current node
+     * @param mushroom the mushroom to predict
+     * @return the class of the mushroom
+     */
+    public String traverseNode(DecisionNode node, Mushroom mushroom) {
+        if (node.isLeaf()) {
+            return node.getMushroomClass();
         }
-        System.out.println(featureInfoGain);
-        Map <String, Integer> map = getAllFeatureValues(mushrooms, "veil-type");
-        //print the highest information gain
-        System.out.println(Collections.max(featureInfoGain.entrySet(), Map.Entry.comparingByValue()).getKey());
-        //print the highest information gain value
-        System.out.println(Collections.max(featureInfoGain.entrySet(), Map.Entry.comparingByValue()).getValue());
-        */
-    }
-
-    //predict the class of mushrooms from the csv
-    public void predict() {
-        //Read each line after the first line
-        Scanner sc = null;
-        sc = new Scanner(new InputStreamReader(Main.class.getResourceAsStream("agaricus-lepiota - testing.csv")));
-        //Skip first line
-        sc.nextLine();
-        while (sc.hasNextLine()) {
-            String[] line = sc.nextLine().split(",");
-            int id = Integer.parseInt(line[0]);
-            Mushroom mushroom = new Mushroom(features.getFeatures(), line[0], id);
-            for (int i = 1; i < line.length; i++) {
-                mushroom.addFeature(features.getFeatures().get(i - 1), line[i]);
-            }
-            traverseNode(treeNodes.get(0),mushroom);
-        }
-    }
-
-    //traverse a node's children to find the correct path
-    public void traverseNode(DecisionNode node, Mushroom mushroom) {
-        for (DecisionNode decisionNode: node.getChildNodes()) {
-            if(mushroom.getFeatureValue(node.getQuestion()).equals(decisionNode.getFeatureValue())) {
-                DecisionNode nextNode = decisionNode;
-                if (nextNode.isLeaf()) {
-                    System.out.println("Mushroom " + mushroom.getId() + " has classification " + nextNode.getMushroomClass());
-                }
-                else {
-                    traverseNode(nextNode, mushroom);
+        else {
+            for (DecisionNode decisionNode : node.getChildNodes()) {
+                if (mushroom.getFeatureValue(node.getQuestion()).equals(decisionNode.getFeatureValue())) {
+                    DecisionNode nextNode = decisionNode;
+                    if (nextNode.isLeaf()) {
+                        return nextNode.getMushroomClass();
+                        //System.out.println(mushroom.getId() + "," + nextNode.getMushroomClass());
+                    } else {
+                        return traverseNode(nextNode, mushroom);
+                    }
                 }
             }
         }
+        return node.getMushroomClass();
     }
 
-    public static Map<String, Integer> getClassCounts(List<Mushroom> mushrooms) {
+    /**
+     * This method counts the total number of each class of mushrooms in
+     * a list of mushrooms
+     * @param mushrooms the list of mushrooms
+     * @return the class counts
+     */
+    public Map<String, Integer> getClassCounts(List<Mushroom> mushrooms) {
         Map<String, Integer> classCounts = new HashMap<>();
         for (Mushroom mushroom: mushrooms) {
             String mushroomClass = mushroom.getMushroomClass();
@@ -93,7 +98,13 @@ public class DecisionTree {
         return classCounts;
     }
 
-
+    /**
+     * This method checks the entropy of a list of mushrooms.
+     * Used to stop tree expansion if entropy is 0, which means all
+     * mushrooms have the same class in that node.
+     * @param mushrooms the list of mushrooms to check
+     * @return the entropy value
+     */
     public double entropy(List<Mushroom> mushrooms) {
         Map<String, Integer> classes = getClassCounts(mushrooms);
         double entropy = 0;
@@ -106,24 +117,84 @@ public class DecisionTree {
         return -entropy;
     }
 
-    public double informationGain(String feature) {
-        return entropy - featureEntropy(feature);
+    /**
+     * This method returns the impurity for a List of mushrooms, using
+     * the different impurity types discussed in class
+     * @param mushrooms the list of mushrooms to check
+     * @param type the impurity type (entropy,gini,me)
+     * @return the impurity value
+     */
+    public double impurity (List<Mushroom> mushrooms, String type) {
+        Map<String, Integer> classes = getClassCounts(mushrooms);
+        if (type.equals("entropy")) {
+            double entropy = 0;
+            for (String mushroomClass: classes.keySet()) {
+                double probability = (double) classes.get(mushroomClass) / mushrooms.size();
+                //shannon entropy formula using log base 2
+                double  log =  probability * Math.log(probability) / Math.log(2);
+                entropy += log;
+            }
+            return -entropy;
+        }
+        else if(type.equals("gini")) {
+            double gini = 0;
+            for (String mushroomClass: classes.keySet()) {
+                double probability = (double) classes.get(mushroomClass) / mushrooms.size();
+                gini += probability*probability;
+            }
+            return (1-gini);
+        }
+        else if(type.equals("me")) {
+            double me = 0;
+            for (String mushroomClass: classes.keySet()) {
+                double probability = (double) classes.get(mushroomClass) / mushrooms.size();
+                if (probability>me) {
+                    me = probability;
+                }
+            }
+            return (1-me);
+        }
+        return 0;
     }
 
-    public double featureEntropy(String feature) {
+    /**
+     * This method returns the information gain for a particular decision tree split
+     * @param mushrooms The list of mushrooms to check
+     * @param feature The feature of mushrooms to check
+     * @param type The impurity type to use (entropy, gini, me)
+     * @return
+     */
+    public double informationGain(List<Mushroom> mushrooms, String feature, String type) {
+        return  impurity(mushrooms, type) - featureImpurity(feature, type);
+    }
+
+    /**
+     * This method calculates the entropy of a split using a feature
+     * @param feature the feature to calculate
+     * @param type the impurity type (entropy, gini, me)
+     * @return the value of the feature impurity
+     */
+    public double featureImpurity(String feature, String type) {
         Map<String, Integer> featureValues = getAllFeatureValues(mushrooms, feature);
-        double featureEntropy = 0;
+        double featureImpurity = 0;
         //iterate through each mushroom and calculate the entropy for each feature
         int total = 0;
         for (String featureValue: featureValues.keySet()) {
-            double valueEntropy = lookupEncoding(feature, featureValue);
-            featureEntropy += valueEntropy;
+            double valueImpurity = lookupEncoding(feature, featureValue, type);
+            featureImpurity += valueImpurity;
             total += featureValues.get(featureValue);
         }
-        return featureEntropy;
+        return featureImpurity;
     }
 
-    public double lookupEncoding(String feature, String value) {
+    /**
+     * This method calculates the impurity for a particular value of a feature
+     * @param feature the feature to calculate
+     * @param value the value of the feature to calculate
+     * @param type the type of impurity (entropy, gini, me)
+     * @return the value of the impurity
+     */
+    public double lookupEncoding(String feature, String value, String type) {
         Map<String, Integer> classCounts = new HashMap<>();
         int total = 0;
         for (Mushroom mushroom : mushrooms) {
@@ -141,17 +212,48 @@ public class DecisionTree {
             //System.out.println(mushroomClass + ": " + classCounts.get(mushroomClass));
             total += classCounts.get(mushroomClass);
         }
-        //get the entropy for this feature
-        double probability = total / (double) mushrooms.size();
-        double entropy = 0;
-        for (String mushroomClass : classCounts.keySet()) {
-            double classProbability = classCounts.get(mushroomClass) / (double) total;
-            double log = classProbability * Math.log(classProbability) / Math.log(2);
-            entropy += log;
+        if (type.equals("entropy")) {
+            //get the entropy for this feature
+            double probability = total / (double) mushrooms.size();
+            double entropy = 0;
+            for (String mushroomClass : classCounts.keySet()) {
+                double classProbability = classCounts.get(mushroomClass) / (double) total;
+                double log = classProbability * Math.log(classProbability) / Math.log(2);
+                entropy += log;
+            }
+            return -entropy * probability;
         }
-        return -entropy * probability;
+        else if (type.equals("gini")) {
+            double probability = total / (double) mushrooms.size();
+            double gini = 1;
+            for (String mushroomClass : classCounts.keySet()) {
+                double classProbability = classCounts.get(mushroomClass) / (double) total;
+                double square = classProbability * classProbability;
+                gini += square;
+            }
+            return ((1 - gini) * probability);
+        }
+        else if (type.equals("me")) {
+            double probability = total / (double) mushrooms.size();
+            double me = 1;
+            double max = 0;
+            for (String mushroomClass : classCounts.keySet()) {
+                double classProbability = classCounts.get(mushroomClass) / (double) total;
+                if (classProbability>max) {
+                    max = classProbability;
+                }
+            }
+            return ((1 - max) * probability);
+        }
+        return 0;
     }
 
+    /**
+     * This method gets the count of each possible value of a feature
+     * @param mushrooms the list of mushrooms to use
+     * @param feature the feature to get the values of
+     * @return a map of the value and the count
+     */
     public Map<String, Integer> getAllFeatureValues(List<Mushroom> mushrooms, String feature) {
         Map<String, Integer> featureValues = new HashMap<>();
         //count the unique values for each feature
@@ -167,6 +269,11 @@ public class DecisionTree {
     }
 
 
+    /**
+     * This method gets all the possible unique values of each feature
+     * @param features the list of features to check
+     * @return a map of features mapped to their set of string values
+     */
     public  Map<String, Set<String>> getUniqueValues(Features features) {
         //for each feature show all of the possible values for that feature
         Map<String, Set<String>> uniqueValues = new HashMap<>();
@@ -181,10 +288,27 @@ public class DecisionTree {
         return uniqueValues;
     }
 
+    /**
+     * This method adds a node to the tree
+     * @param decisionNode the node to add
+     */
     public void addNode(DecisionNode decisionNode) {
         treeNodes.add(decisionNode);
     }
 
+    /**
+     * This method checks whether the statistic calculated for the split
+     * is greater than the chi square table value.
+     * @param degrees the degrees of freedom
+     * @param testValue the calculated value
+     * @return true if greater, false if not
+     */
+    public boolean chiPassed (int degrees, double testValue) {
+        if (testValue>chiTable.get(degrees).get(alpha)) {
+            return true;
+        }
+        return false;
+    }
 
 
 }
