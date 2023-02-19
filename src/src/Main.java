@@ -24,11 +24,14 @@ public class Main {
             impurityType = scanner.nextLine();
         }
         double alpha = 0;
-        System.out.println("Enter alpha value (\"0.995\", \"0.99\", \"0.975\", \"0.95\", \"0.90\", \"0.10\", \"0.05\", \"0.025\", \"0.01\", \"0.005\")");
+        System.out.println("Enter alpha value (\"0.995\", \"0.99\", \"0.975\", \"0.95\", \"0.90\", \"0.75\"," +
+                " \"0.5\", \"0.25\", \"0.10\", \"0.05\", \"0.025\", \"0.01\", \"0.005\", \"0.002\", \"0.001\")");
         alpha = Double.parseDouble(scanner.nextLine());
-        while (alpha != 0.995 && alpha != 0.99 && alpha != 0.975 && alpha != 0.95 && alpha != 0.90 && alpha != 0.10 && alpha != 0.05 && alpha != 0.025
-                && alpha != 0.01 && alpha != 0.005) {
-            System.out.println("Wrong input. Enter alpha value (\"0.995\", \"0.99\", \"0.975\", \"0.95\", \"0.90\", \"0.10\", \"0.05\", \"0.025\", \"0.01\", \"0.005\")");
+        while (alpha != 0.995 && alpha != 0.99 && alpha != 0.975 && alpha != 0.95 && alpha != 0.90 && alpha != 0.75
+                && alpha != 0.5 && alpha != 0.25 && alpha != 0.10 && alpha != 0.05 && alpha != 0.025
+                && alpha != 0.01 && alpha != 0.005 && alpha != 0.002 && alpha != 0.001) {
+            System.out.println("Wrong input. Enter alpha value (\"0.995\", \"0.99\", \"0.975\", \"0.95\", \"0.90\", \"0.75\", \"0.5\"," +
+                    " \"0.25\", \"0.10\", \"0.05\", \"0.025\", \"0.01\", \"0.005\", \"0.002\", \"0.001\")");
             alpha = Double.parseDouble(scanner.nextLine());
         }
 
@@ -78,13 +81,24 @@ public class Main {
      */
     private static void buildRandomForest(String impurityType, double alpha) {
         //loop and create i trees
-        for (int i = 0; i<111 ; i++) {
+        int maxDepth = 0;
+        double avgDepth = 0;
+        double avgAccuracy = 0;
+        for (int i = 0; i<51 ; i++) {
             DecisionTree decisionTree = new DecisionTree(createFeatureSubset(features.getFeatures()),
                     createMushroomSubset(trainingSet), impurityType, chiTable, alpha);
             randomForest.add(decisionTree);
-            System.out.println("Max depth: " + decisionTree.getMaxDepth());
+            if (decisionTree.getMaxDepth()>maxDepth) {
+                maxDepth = decisionTree.getMaxDepth();
+            }
+            avgDepth += decisionTree.getMaxDepth();
+            //System.out.println("Max depth: " + decisionTree.getMaxDepth());
         }
+        System.out.println("Forest max depth: " + maxDepth);
+        avgDepth = avgDepth/51;
+        System.out.println("Average tree depth: " + avgDepth);
         int correct = 0;
+        Map<DecisionTree,Integer> treeAccuracyMap = new HashMap<>();
         //test with validation set
         for (Mushroom mushroom: validationSet) {
             int pVotes = 0;
@@ -109,8 +123,21 @@ public class Main {
                 correct++;
             }
         }
+        //get accuracy per tree
+        for (DecisionTree decisionTree: randomForest) {
+            int treeCorrect = 0;
+            for (Mushroom mushroom:validationSet) {
+                if (mushroom.getMushroomClass().equals(decisionTree.predictMushroom(mushroom))) {
+                    treeCorrect++;
+                }
+            }
+            avgAccuracy += ( (double) (treeCorrect)) /( (double) validationSet.size());
+        }
+
         //print forest accuracy
         double accuracy = ((double) (correct)) / ((double) validationSet.size());
+        avgAccuracy = avgAccuracy / 51;
+        System.out.println("Average Tree Accuracy: " + avgAccuracy);
         System.out.println("Random Forest Accuracy: " + accuracy);
     }
 
@@ -198,7 +225,7 @@ public class Main {
         List<String> subset = new ArrayList<>();
         Random rand = new Random();
         //get i number of unique features
-        for (int i=0; i<4; i++) {
+        for (int i=0; i<7; i++) {
             int index = rand.nextInt(features.size());
             while (subset.contains(features.get(index))) {
                 index = rand.nextInt(features.size());
@@ -221,11 +248,16 @@ public class Main {
             alphaValues.put(0.975, Double.parseDouble(line[3]));
             alphaValues.put(0.95, Double.parseDouble(line[4]));
             alphaValues.put(0.90, Double.parseDouble(line[5]));
-            alphaValues.put(0.10, Double.parseDouble(line[6]));
-            alphaValues.put(0.05, Double.parseDouble(line[7]));
-            alphaValues.put(0.025, Double.parseDouble(line[8]));
-            alphaValues.put(0.01, Double.parseDouble(line[9]));
-            alphaValues.put(0.005, Double.parseDouble(line[10]));
+            alphaValues.put(0.75, Double.parseDouble(line[6]));
+            alphaValues.put(0.5, Double.parseDouble(line[7]));
+            alphaValues.put(0.25, Double.parseDouble(line[8]));
+            alphaValues.put(0.10, Double.parseDouble(line[9]));
+            alphaValues.put(0.05, Double.parseDouble(line[10]));
+            alphaValues.put(0.025, Double.parseDouble(line[11]));
+            alphaValues.put(0.01, Double.parseDouble(line[12]));
+            alphaValues.put(0.005, Double.parseDouble(line[13]));
+            alphaValues.put(0.002, Double.parseDouble(line[14]));
+            alphaValues.put(0.001, Double.parseDouble(line[15]));
             chiTable.put(Integer.parseInt(line[0]), alphaValues);
         }
     }
