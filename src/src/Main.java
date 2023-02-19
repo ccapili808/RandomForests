@@ -66,7 +66,7 @@ public class Main {
             else {
                 mushroomClass = "e";
             }
-            System.out.println(mushroom.getId() + "," + mushroomClass);
+            //System.out.println(mushroom.getId() + "," + mushroomClass);
         }
     }
 
@@ -77,10 +77,12 @@ public class Main {
      * @param alpha the alpha value
      */
     private static void buildRandomForest(String impurityType, double alpha) {
-        for (int i = 0; i<51 ; i++) {
+        //loop and create i trees
+        for (int i = 0; i<111 ; i++) {
             DecisionTree decisionTree = new DecisionTree(createFeatureSubset(features.getFeatures()),
                     createMushroomSubset(trainingSet), impurityType, chiTable, alpha);
             randomForest.add(decisionTree);
+            System.out.println("Max depth: " + decisionTree.getMaxDepth());
         }
         int correct = 0;
         //test with validation set
@@ -162,6 +164,7 @@ public class Main {
      * @param mushrooms The mushroom list to split
      */
     public static void splitMushroomSet(List<Mushroom> mushrooms) {
+        //split mushroom dataset into training and validation sets
         int size = (int) (0.8 * mushrooms.size());
         Random rand = new Random();
         for (int i = 0; i < size; i++) {
@@ -194,6 +197,7 @@ public class Main {
     public static List<String> createFeatureSubset (List<String> features) {
         List<String> subset = new ArrayList<>();
         Random rand = new Random();
+        //get i number of unique features
         for (int i=0; i<4; i++) {
             int index = rand.nextInt(features.size());
             while (subset.contains(features.get(index))) {

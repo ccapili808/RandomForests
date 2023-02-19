@@ -26,6 +26,12 @@ public class Mushroom {
         this.mushroomClass = mushroomClass;
     }
 
+    /**
+     * Constructor for testing mushrooms with no class provided
+     * @param features list of features
+     * @param featureValues List of feature values for each feature
+     * @param id mushroom id
+     */
     public Mushroom(List<String> features, String featureValues, int id) {
         this.features = features;
         for (String feature: features) {

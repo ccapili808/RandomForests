@@ -30,23 +30,37 @@ public class DecisionNode {
                         List<String> features, DecisionTree decisionTree, String impurityType) {
         this.featureValue = featureValue;
         this.parentNode = parentNode;
+        //add the mushrooms to this node's dataset
+        //can't use = or the same object will be modified
         for(Mushroom m: dataSet) {
             this.dataSet.add(m);
         }
         for (String s: features) {
             this.features.add(s);
         }
+        //set node variables
         this.decisionTree = decisionTree;
         this.depth = parentNode.getDepth() + 1;
+        //change tree max depth if necessary
+        if (this.depth > decisionTree.getMaxDepth()) {
+            decisionTree.setMaxDepth(this.depth);
+        }
         this.impurityType = impurityType;
+        //add node to parent's list
         parentNode.addChildNode(this);
+        //add node to tree
         decisionTree.addNode(this);
+        //check dataset entropy
+        //if = 0 no need to split any more
+        //set as leaf node and set class
         if(decisionTree.entropy(dataSet)==0) {
             isLeaf = true;
             mushroomClass = dataSet.get(0).getMushroomClass();
         }
+        //if more features left, try to split tree
         else if(features.size()>0){
             Map<String,Integer> classCounts = decisionTree.getClassCounts(dataSet);
+            //set node class in case split terminates
             if (classCounts.get("p")>=classCounts.get("e")) {
                 this.mushroomClass = "p";
             }
@@ -55,6 +69,8 @@ public class DecisionNode {
             }
             Split();
         }
+        //if no more features left we can't split any more
+        //set as leaf and set class as majority
         else {
             this.isLeaf = true;
             Map<String,Integer> classCounts = decisionTree.getClassCounts(dataSet);
@@ -65,7 +81,6 @@ public class DecisionNode {
                 this.mushroomClass = "e";
             }
         }
-        //Split();
     }
 
 
@@ -78,6 +93,7 @@ public class DecisionNode {
      */
     public DecisionNode(List<Mushroom> dataSet,
                         List<String> features, DecisionTree decisionTree, String type) {
+        //root node, same logic as above but simpler because we always have features left
         for(Mushroom m: dataSet) {
             this.dataSet.add(m);
         }
@@ -164,71 +180,73 @@ public class DecisionNode {
      * to the majority class of the mushroom set.
      */
     public void Split() {
-        double entropy = decisionTree.entropy(dataSet);
+        //calculate the information gain for each feature
         Map<String, Double> featureInfoGain = new HashMap<>();
         for (String feature: features) {
             featureInfoGain.put(feature, decisionTree.informationGain(dataSet, feature, impurityType));
         }
         Map<String, Integer> featureValues = new HashMap<>();
+        //choose the best feature
         String bestFeature = Collections.max(featureInfoGain.entrySet(), Map.Entry.comparingByValue()).getKey();
+        //get all possible feature labels
         featureValues = decisionTree.getAllFeatureValues(dataSet, bestFeature);
+        //set this node's question for splitting as the best IG feature
         this.question = bestFeature;
         double chiTest = 0;
         Map<String, Integer> classCounts = decisionTree.getClassCounts(dataSet);
         Map<String, Double> classProbabilities = new HashMap<>();
+        //get each class probability
         for (String s: classCounts.keySet()) {
             double classProb = ((double) classCounts.get(s))/((double) dataSet.size());
             classProbabilities.put(s, classProb);
         }
+        //loop through all labels of the best feature
         for (String featureValue: featureValues.keySet()) {
+            //loop through the dataset, and match the mushrooms with each label of the feature
             List<Mushroom> featureValueDataSet = new ArrayList<>();
             for(Mushroom mushroom: dataSet) {
                 if (mushroom.getFeatureValue(bestFeature).equals(featureValue)) {
                     featureValueDataSet.add(mushroom);
                 }
             }
+            //find the real counts of mushrooms of each class for the specific attribute value
             Map<String, Integer> valueClassCounts = decisionTree.getClassCounts(featureValueDataSet);
             for (String string:classCounts.keySet()) {
                 if (!valueClassCounts.containsKey(string)) {
                     valueClassCounts.put(string, 0);
                 }
             }
+            //find the expected counts of mushrooms of each class for the specific attribute value
             Map<String, Double> expectedCounts = new HashMap<>();
             for (String s: classCounts.keySet()) {
                 double expected = (double) (classProbabilities.get(s) * featureValueDataSet.size());
                 expectedCounts.put(s, expected);
-                chiTest += (double) (((valueClassCounts.get(s) - expectedCounts.get(s)) *
-                        (valueClassCounts.get(s) - expectedCounts.get(s)))/expectedCounts.get(s));
+                //add to the chi test value
+                chiTest += ((double) (((valueClassCounts.get(s) - expectedCounts.get(s)) *
+                        (valueClassCounts.get(s) - expectedCounts.get(s)))))/( (double) expectedCounts.get(s));
             }
-            int degrees = (classCounts.size()-1)*((featureValues).size()-1);
-            if (degrees>0) {
-                if (decisionTree.chiPassed(degrees, chiTest)) {
-                    for (String value : featureValues.keySet()) {
-                        List<Mushroom> valueDataSet = new ArrayList<>();
-                        for (Mushroom mushroom : dataSet) {
-                            if (mushroom.getFeatureValue(bestFeature).equals(value)) {
-                                valueDataSet.add(mushroom);
-                            }
-                        }
-                        List<String> featuresLeft = new ArrayList<>(features);
-                        featuresLeft.remove(bestFeature);
-                        if (valueDataSet.size() > 0) {
-                            DecisionNode childNode = new DecisionNode(value, this, valueDataSet, featuresLeft, this.decisionTree, this.impurityType);
+        }
+        //use chi-square test to check if tree expansion should stop or not
+        int degrees = (1)*((featureValues).keySet().size()-1);
+        if (degrees>0) {
+            if (decisionTree.chiPassed(degrees, chiTest)) {
+                // for each possible attribute value, add the mushrooms to a new list and create a child node with it
+                for (String value : featureValues.keySet()) {
+                    List<Mushroom> valueDataSet = new ArrayList<>();
+                    for (Mushroom mushroom : dataSet) {
+                        if (mushroom.getFeatureValue(bestFeature).equals(value)) {
+                            valueDataSet.add(mushroom);
                         }
                     }
-                }
-                else {
-                    this.isLeaf = true;
-                    this.mushroomClass = "null";
-                    for (String s : classCounts.keySet()) {
-                        if (mushroomClass.equals("null")) {
-                            mushroomClass = s;
-                        } else if (classCounts.get(s) > classCounts.get(mushroomClass)) {
-                            mushroomClass = s;
-                        }
+                    List<String> featuresLeft = new ArrayList<>(features);
+                    //remove the feature used from the list of features to be used for future splits
+                    featuresLeft.remove(bestFeature);
+                    if (valueDataSet.size() > 0) {
+                        DecisionNode childNode = new DecisionNode(value, this, valueDataSet, featuresLeft, this.decisionTree, this.impurityType);
                     }
                 }
             }
+            //if chi square test fails, set as leaf node and set the class
             else {
                 this.isLeaf = true;
                 this.mushroomClass = "null";
@@ -238,6 +256,18 @@ public class DecisionNode {
                     } else if (classCounts.get(s) > classCounts.get(mushroomClass)) {
                         mushroomClass = s;
                     }
+                }
+            }
+        }
+        //if only one feature value, set as leaf and set the class
+        else {
+            this.isLeaf = true;
+            this.mushroomClass = "null";
+            for (String s : classCounts.keySet()) {
+                if (mushroomClass.equals("null")) {
+                    mushroomClass = s;
+                } else if (classCounts.get(s) > classCounts.get(mushroomClass)) {
+                    mushroomClass = s;
                 }
             }
         }
