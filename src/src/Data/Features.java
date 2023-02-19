@@ -14,7 +14,17 @@ public class Features {
     }
     private final List<String> features = new ArrayList<>();
     private int featureCount = 0;
+
+    /**
+     * Empty Constructor
+     */
     public Features(){}
+
+    /**
+     * Loads features from CSV file
+     * NOTE: 'id and class' are not included in the list of features
+     * @return - List of features
+     */
     public List<String> loadFeatures() {
         //parsing a CSV file into Scanner class constructor
         Scanner sc = null;
@@ -30,5 +40,15 @@ public class Features {
         }
         return features;
     }
+
+    /**
+     * Returns the number of features
+     * @return number of features
+     * NOTE: 'id and class' are not included in the list of features
+     */
+    public int getFeatureCount() {
+        return featureCount;
+    }
+
 
 }
