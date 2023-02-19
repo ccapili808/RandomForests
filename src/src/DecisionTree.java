@@ -11,6 +11,7 @@ public class DecisionTree {
     private int numFeatures;
     private int numMushrooms;
     private int numberOfClasses = 2;
+    private int maxDepth = 0;
     private double alpha;
     private List<DecisionNode> treeNodes = new ArrayList<>();
     private Map<Integer, Map<Double,Double>> chiTable;
@@ -40,7 +41,6 @@ public class DecisionTree {
      */
     public void buildTree(String type) {
         DecisionNode root = new DecisionNode(mushrooms, features, this, type);
-
     }
 
     /**
@@ -60,16 +60,19 @@ public class DecisionTree {
      * @return the class of the mushroom
      */
     public String traverseNode(DecisionNode node, Mushroom mushroom) {
+        //if we reached a leaf, return the class prediction of that node
         if (node.isLeaf()) {
             return node.getMushroomClass();
         }
+        //otherwise check the child nodes for the mushroom's feature value
         else {
             for (DecisionNode decisionNode : node.getChildNodes()) {
                 if (mushroom.getFeatureValue(node.getQuestion()).equals(decisionNode.getFeatureValue())) {
                     DecisionNode nextNode = decisionNode;
+                    //if leaf, return class
                     if (nextNode.isLeaf()) {
                         return nextNode.getMushroomClass();
-                        //System.out.println(mushroom.getId() + "," + nextNode.getMushroomClass());
+                    //else traverse the child node
                     } else {
                         return traverseNode(nextNode, mushroom);
                     }
@@ -140,18 +143,22 @@ public class DecisionTree {
             double gini = 0;
             for (String mushroomClass: classes.keySet()) {
                 double probability = (double) classes.get(mushroomClass) / mushrooms.size();
+                //square the probability of each class
                 gini += probability*probability;
             }
+            //subtract it from 1 to get the gini impurity
             return (1-gini);
         }
         else if(type.equals("me")) {
             double me = 0;
+            //find the max of class probabilities
             for (String mushroomClass: classes.keySet()) {
                 double probability = (double) classes.get(mushroomClass) / mushrooms.size();
                 if (probability>me) {
                     me = probability;
                 }
             }
+            //subtract from 1 to get misclassification error
             return (1-me);
         }
         return 0;
@@ -177,9 +184,10 @@ public class DecisionTree {
     public double featureImpurity(String feature, String type) {
         Map<String, Integer> featureValues = getAllFeatureValues(mushrooms, feature);
         double featureImpurity = 0;
-        //iterate through each mushroom and calculate the entropy for each feature
+        //iterate through each mushroom and calculate the impurity for each feature
         int total = 0;
         for (String featureValue: featureValues.keySet()) {
+            //get the impurity for each value of the feature
             double valueImpurity = lookupEncoding(feature, featureValue, type);
             featureImpurity += valueImpurity;
             total += featureValues.get(featureValue);
@@ -213,7 +221,7 @@ public class DecisionTree {
             total += classCounts.get(mushroomClass);
         }
         if (type.equals("entropy")) {
-            //get the entropy for this feature
+            //get the entropy for this feature value
             double probability = total / (double) mushrooms.size();
             double entropy = 0;
             for (String mushroomClass : classCounts.keySet()) {
@@ -221,28 +229,34 @@ public class DecisionTree {
                 double log = classProbability * Math.log(classProbability) / Math.log(2);
                 entropy += log;
             }
+            //multiply by the size of the value
             return -entropy * probability;
         }
         else if (type.equals("gini")) {
+            //get the ratio of mushrooms with this feature value
             double probability = total / (double) mushrooms.size();
             double gini = 1;
             for (String mushroomClass : classCounts.keySet()) {
                 double classProbability = classCounts.get(mushroomClass) / (double) total;
                 double square = classProbability * classProbability;
+                //get the square of probabilities for gini
                 gini += square;
             }
+            //subtract squares from 1 and multiply by value ratio for IG
             return ((1 - gini) * probability);
         }
         else if (type.equals("me")) {
             double probability = total / (double) mushrooms.size();
             double me = 1;
             double max = 0;
+            //get the max probability
             for (String mushroomClass : classCounts.keySet()) {
                 double classProbability = classCounts.get(mushroomClass) / (double) total;
                 if (classProbability>max) {
                     max = classProbability;
                 }
             }
+            //subtract from 1 and multiply by value ratio for IG
             return ((1 - max) * probability);
         }
         return 0;
@@ -310,5 +324,11 @@ public class DecisionTree {
         return false;
     }
 
+    public int getMaxDepth() {
+        return maxDepth;
+    }
 
+    public void setMaxDepth(int maxDepth) {
+        this.maxDepth = maxDepth;
+    }
 }

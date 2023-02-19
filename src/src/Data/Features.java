@@ -18,7 +18,7 @@ public class Features {
     public List<String> loadFeatures() {
         //parsing a CSV file into Scanner class constructor
         Scanner sc = null;
-        sc = new Scanner(new InputStreamReader(getClass().getResourceAsStream("../agaricus-lepiota - training.csv")));
+        sc = new Scanner(new InputStreamReader(getClass().getResourceAsStream("/agaricus-lepiota - training.csv")));
         //Read first line and comma seperate
         String[] firstLine = sc.nextLine().split(",");
         //Add all features to list
