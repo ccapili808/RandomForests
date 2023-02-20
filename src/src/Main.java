@@ -13,6 +13,8 @@ public class Main {
     private static List<Mushroom> validationSet = new ArrayList<>();
     private static List<Mushroom> testingSet = new ArrayList<>();
     private static Features features;
+    private static int numTrees = 51;
+    private static int numFeatures = 7;
     public static void main(String[] args) {
         features = new Features();
         features.loadFeatures();
@@ -33,6 +35,18 @@ public class Main {
             System.out.println("Wrong input. Enter alpha value (\"0.995\", \"0.99\", \"0.975\", \"0.95\", \"0.90\", \"0.75\", \"0.5\"," +
                     " \"0.25\", \"0.10\", \"0.05\", \"0.025\", \"0.01\", \"0.005\", \"0.002\", \"0.001\")");
             alpha = Double.parseDouble(scanner.nextLine());
+        }
+        System.out.println("Enter number of trees (positive integer)");
+        numTrees = Integer.parseInt(scanner.nextLine());
+        while (!(numTrees>0)) {
+            System.out.println("Wrong input. Enter number of trees (positive integer)");
+            numTrees = Integer.parseInt(scanner.nextLine());
+        }
+        System.out.println("Enter number of features (0<Integer<23)");
+        numFeatures = Integer.parseInt(scanner.nextLine());
+        while ((numFeatures<1) || (numFeatures>22)) {
+            System.out.println("Wrong input. Enter number of features (0<Integer<23)");
+            numFeatures = Integer.parseInt(scanner.nextLine());
         }
 
         buildDataSet(features);
@@ -69,7 +83,7 @@ public class Main {
             else {
                 mushroomClass = "e";
             }
-            //System.out.println(mushroom.getId() + "," + mushroomClass);
+            System.out.println(mushroom.getId() + "," + mushroomClass);
         }
     }
 
@@ -84,7 +98,7 @@ public class Main {
         int maxDepth = 0;
         double avgDepth = 0;
         double avgAccuracy = 0;
-        for (int i = 0; i<51 ; i++) {
+        for (int i = 0; i<numTrees ; i++) {
             DecisionTree decisionTree = new DecisionTree(createFeatureSubset(features.getFeatures()),
                     createMushroomSubset(trainingSet), impurityType, chiTable, alpha);
             randomForest.add(decisionTree);
@@ -95,7 +109,7 @@ public class Main {
             //System.out.println("Max depth: " + decisionTree.getMaxDepth());
         }
         System.out.println("Forest max depth: " + maxDepth);
-        avgDepth = avgDepth/51;
+        avgDepth = avgDepth/numTrees;
         System.out.println("Average tree depth: " + avgDepth);
         int correct = 0;
         Map<DecisionTree,Integer> treeAccuracyMap = new HashMap<>();
@@ -136,7 +150,7 @@ public class Main {
 
         //print forest accuracy
         double accuracy = ((double) (correct)) / ((double) validationSet.size());
-        avgAccuracy = avgAccuracy / 51;
+        avgAccuracy = avgAccuracy / numTrees;
         System.out.println("Average Tree Accuracy: " + avgAccuracy);
         System.out.println("Random Forest Accuracy: " + accuracy);
     }
@@ -225,7 +239,7 @@ public class Main {
         List<String> subset = new ArrayList<>();
         Random rand = new Random();
         //get i number of unique features
-        for (int i=0; i<7; i++) {
+        for (int i=0; i<numFeatures; i++) {
             int index = rand.nextInt(features.size());
             while (subset.contains(features.get(index))) {
                 index = rand.nextInt(features.size());
