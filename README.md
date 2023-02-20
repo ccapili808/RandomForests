@@ -25,5 +25,6 @@ This implementation was done in Java by Chai Capili and Vasileios Grigorios Kour
 
 ### More notes on this Implementation
     Our code is modular, and allows us to see how alpha, splitting type, the number of trees, and the number of 
-    features affect the accuracy of the forest. Please see the report above for our findings. 
+    features affect the accuracy of the forest. Please see the report above for our findings.
+    We decided that 51 trees with 7 random features each was a great balance between accuracy and time.
     
