@@ -8,8 +8,8 @@ This implementation was done in Java by Chai Capili and Vasileios Grigorios Kour
     The program takes in four inputs at runtime:
     1. The type of impurity measure to use (gini, entropy, Misclassification Error)
     2. The alpha value for Chi Square termination 
-    3. The number of trees to use in the forest
-    4. The number of features to use in each tree
+    3. The number of trees to use in the forest (INTEGER ONLY) 
+    4. The number of features to use in each tree (INTEGER ONLY) 
 
     Please give the program some time to compile and the following output will be displayed: 
 
